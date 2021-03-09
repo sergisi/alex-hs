@@ -1,0 +1,8 @@
+-- this is an inline comment
+--{
+This is a multiline comment
+How this works
+A -> B -> C
+It's a mystery
+--}
+P -> A
