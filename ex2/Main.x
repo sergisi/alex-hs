@@ -12,8 +12,8 @@ $parentesis = [\(\)]
 $andOperator = ∧
 $orOperator = ∨
 @validChars = $complementari | $id | @impl | @dobleimpl | $parentesis | $andOperator | $orOperator
-@multilineCommentStart = "--{"
-@multilineCommentEnd = "--}"
+@multilineCommentStart = "{-"
+@multilineCommentEnd = "-}"
 @inlineComment = "--" .*
 
 tokens :-
