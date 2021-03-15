@@ -1,0 +1,170 @@
+#+TITLE: Alex
+#+author: Joaquim Picó, Sergi Simón
+
+#+OPTIONS: toc:nil
+
+#+begin_comment
+Màx.: 20mins
+15mins
+#+end_comment
+
+* Introducció
+** Haskell
+#+begin_comment
+És un llenguatge purament funcional, fortament tipat,
+i els actuals caps del compilador del llenguatge tenen
+una peculiar forma d'encarar l'evolució del llenguatge.
+
++ Es lligat a l'academia
++ Explicar que existeixen les extensions
++ Diferencia les funcions pures amb les que tenen
+  efectes secundàris (escriure a la consola).
+
++ Alex esta basat en lex/flex
+#+end_comment
+
+* Sintaxi d'Alex
+** Primer bloc d'inicialització
+#+begin_src
+{
+-- codi
+}
+#+end_src
+
+#+begin_comment
+Imports i extensions de llenguatge
+#+end_comment
+** Macros
++ $set
++ @regex
+#+begin_comment
+Diferencia entre
+$charsSet
+@regex
+I sintaxi
+#+end_comment
+** Normes
+
+#+BEGIN_SRC
+@id :-
+#+END_SRC
+
+#+begin_comment
+Match de norma s'executa un codi amb un tipus prefixat.
+
+Els wrappers, que parlarem més endevant faciliten aquestes normes.
+
+Les normes son funcions amb certs paràmetres d'entrada i de sortida.
+#+end_comment
+
+** Segon bloc de processament
+#+begin_src
+{
+-- codi
+}
+#+end_src
+#+begin_comment
+En general es defineix:
+
++ El tipus de dades que es parsejen
++ Funcions auxiliars per a les normes
++ Main si es necessari
++ Si s'utilitza amb Happy (yacc per a haskell) en general es crea una funció lexer.
+#+end_comment
+
+** Exemple
+#+BEGIN_SRC haskell
+{
+module Main (main) where
+}
+
+%wrapper "basic"
+
+$digit = 0-9      -- digits
+$alpha = [a-zA-Z]   -- alphabetic characters
+@comment = "--".*
+
+tokens :-
+
+
+$white+                        ;
+@comment                       ;
+let                            { \s -> Let }
+in                             { \s -> In }
+$digit+                        { \s -> Int (read s) }
+[\=\+\-\*\/\(\)]               { \s -> Sym (head s) }
+$alpha [$alpha $digit \_ \’]*  { \s -> Var s }
+#+end_src
+
+#+reveal: split
+
+#+begin_src haskell
+{
+-- Each action has type :: String -> Token
+
+-- The token type:
+data Token = Let | In | Sym Char  | Var String  | Int Int
+  deriving (Eq,Show)
+
+main = do
+  s <- getContents
+  print (alexScanTokens s)
+
+}
+#+END_SRC
+* /Wrappers/
+#+begin_comment
+Hi ha molts tipus diferents de wrappers, comentarem els més utilitzats
+
+Comentar els ByteString (més eficients, no els hem necessitat). Tots els
+que comentarem tenen aquest mode
+
+gscan Wrapper es manté per raons històriques.
+#+end_comment
++ gscan
++ ByteString
+** Bàsic
+#+BEGIN_SRC haskell
+type Rule a = String -> a
+#+END_SRC
+** PosN
+#+BEGIN_SRC haskell
+data AlexPosn = AlexPn Int  -- absolute character offset
+                       Int  -- line number
+                       Int  -- column number
+
+type Rule a = AlexPosn -> String -> token
+#+END_SRC
+** Mònada Àlex
+#+BEGIN_SRC haskell
+type Rule a = AlexInput -> Int -> Alex a
+#+END_SRC
+*** Mònada amb un estat definit
+
+* Processament de múltiples fitxers
+** IO Mònada
+Només es pot llegir fitxers en la mònada ~IO~, ja que haskell
+diferencia les funcions pures de les impures en temps de compilació.
+#+BEGIN_SRC haskell
+main :: IO ()
+#+END_SRC
+
+** Problema
+El preprocessament de macros i imports és impur:
++ Les macros requereixen d'un estat global
++ Els imports requereixen de la lectura de fitxers.
+
+** Solució de les macros
++ Les macros es poden mantenir a l'estat de la mònada
+
+** Solució dels imports
+Postprocessament
+#+begin_comment
+GHC, el compilador de haskell, realitzar els imports després
+de l'anàlisi lèxic i abans de l'anàlisi sintàctic.
+
+Es marquen els imports com un token normal i després es processen. Un aventatge
+de fer-ho així és la capacitat de 
+#+end_comment
+
+* Gràcies per la vostra atenció
