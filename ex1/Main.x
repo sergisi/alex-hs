@@ -5,13 +5,15 @@ import Types
 
 %wrapper "monad"
 
-@reservedWords = "where"
-@identifiers = [a-zA-Z][a-zA-Z0-9]*\'?
-@constants = [0-9]+
-@operators = \+
-$delimiter = [\; \( \) \[ \] \; \, ]
-$separator = $white
+@reservedWords = "where" | "as" | "case of" | "class" | "data" | "data family" | "data instance" | "default" | "deriving" | "deriving instance" | "do" | "forall" | "foreing" | "hiding" | "if" | "then" | "else" | "import" | "infix" | "infixl" | "infixr" | "instance" | "let" | "in" | "mdo" | "module" | "newtype" | "proc" | "qualified" | "rec" | "type" | "type family" | "type instance" | "#"
+@identifiers = [_a-zA-Z][_a-zA-Z0-9]*\'?
+@constants = ([0-9]+|"([^"]|\\")*[^\\]")
+$operators = [-\{\}+*/^&|><=\\.!;:@\(\_~)]+
+$delimiter = [\( \) \[ \] \; \, ]
+$separator = $white+
 @inlineComment = "--".*
+@multilineCommentStart = "{-"
+@multilineCommentEnd = "-}"
 
 tokens :-
 
