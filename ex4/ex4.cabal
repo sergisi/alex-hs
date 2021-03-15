@@ -1,5 +1,5 @@
 cabal-version:      2.4
-name:               ex1
+name:               ex4
 version:            0.1.0.0
 
 -- A short (one-line) description of the package.
@@ -19,21 +19,18 @@ maintainer:         sergi.simon@ce.eurecat.org
 -- A copyright notice.
 -- copyright:
 -- category:
-extra-source-files:
-    CHANGELOG.md
-    README.md
+extra-source-files: CHANGELOG.md
 
-executable ex1
+executable ex4
     main-is:          Main.hs
+    other-modules:       Types
 
     -- Modules included in this executable, other than Main.
-    other-modules:    Types
+    -- other-modules:
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
-    build-depends:    base ^>=4.12.0.0
-                       , microlens
-                       , microlens-th
-                       , array
+    build-depends:    base ^>=4.12.0.0,
+                      array
     -- hs-source-dirs:   app
     default-language: Haskell2010

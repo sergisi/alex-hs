@@ -135,6 +135,52 @@ data AlexPosn = AlexPn Int  -- absolute character offset
 
 type Rule a = AlexPosn -> String -> token
 #+END_SRC
+
+#+reveal: split
+#+BEGIN_SRC haskell
+{
+module Main (main) where
+}
+
+%wrapper "posn"
+
+@aba = "aba"
+@newline = "\n"
+
+tokens :-
+
+@aba { token (\p s-> SomeToken p) }
+$white+  ;
+@newline ;
+
+{
+
+token f p s = f p s
+
+data Token = SomeToken AlexPosn deriving (Eq, Show) 
+ 
+main = do
+    s <- getContents
+    print $ alexScanTokens s
+}
+#+END_SRC
+#+reveal: split
+#+BEGIN_SRC
+aba
+aba
+aba
+aba
+aba
+#+END_SRC
+Produeix
+#+BEGIN_SRC
+[ SomeToken (AlexPn 0 1 1)
+, SomeToken (AlexPn 4 2 1)
+, SomeToken (AlexPn 8 3 1)
+, SomeToken (AlexPn 12 4 1)
+, SomeToken (AlexPn 16 5 1)
+]
+#+END_SRC
 ** Mònada Àlex
 #+BEGIN_SRC haskell
 type Rule a = AlexInput -> Int -> Alex a
