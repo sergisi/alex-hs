@@ -54,8 +54,8 @@ una peculiar forma d'encarar l'evolució del llenguatge.
 Imports i extensions de llenguatge
 #+end_comment
 ** Macros
-+ $set
-+ @regex
++ $set :: ~char | [sets union]~
++ @regex :: ~$someSet+~
 #+begin_comment
 Diferencia entre
 $charsSet
@@ -66,6 +66,8 @@ I sintaxi
 
 #+BEGIN_SRC
 @id :-
+
+regex { rule }
 #+END_SRC
 
 #+begin_comment
@@ -202,7 +204,24 @@ Produeix
 #+END_SRC
 ** Mònada Àlex
 #+BEGIN_SRC haskell
+type AlexInput = (AlexPosn, -- current position,
+                  Char,     -- previous char
+                  [Byte],   -- rest of the bytes for the current char
+                  String)   -- current input string
 type Rule a = AlexInput -> Int -> Alex a
+
+-- Useful functions:
+skip :: Rule result
+skip input len = alexMonadScan
+
+andBegin :: Rule result -> Int -> Rule result
+(act ‘andBegin‘ code) input len = do alexSetStartCode code; act input len
+
+begin :: Int -> Rule result
+begin code = skip ‘andBegin‘ code
+
+token :: (AlexInput -> Int -> token) -> Rule token
+token t input len = return (t input len)
 #+END_SRC
 
 #+reveal: split

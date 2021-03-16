@@ -15,7 +15,7 @@
 <div class="reveal">
 <div class="slides">
 <section id="sec-title-slide">
-<h1 class="title">Alex</h1><h2 class="author">Joaquim Picó, Sergi Simón</h2><p class="date">Created: 2021-03-15 lun 23:07</p>
+<h1 class="title">Alex</h1><h2 class="author">Joaquim Picó, Sergi Simón</h2><p class="date">Created: 2021-03-16 mar 13:42</p>
 </section>
 <section>
 <section id="slide-1">
@@ -44,16 +44,18 @@
 </section>
 <section id="slide-2-2">
 <h3 id="2-2"><span class="section-number-3">2.2</span> Macros</h3>
-<ul>
-<li>$set</li>
-<li>@regex</li>
+<dl>
+<dt>$set</dt><dd><code>char | [sets union]</code></dd>
+<dt>@regex</dt><dd><code>$someSet+</code></dd>
 
-</ul>
+</dl>
 </section>
 <section id="slide-2-3">
 <h3 id="2-3"><span class="section-number-3">2.3</span> Normes</h3>
 <pre class="example">
 @id :-
+
+regex { rule }
 </pre>
 
 </section>
@@ -199,7 +201,24 @@ Produeix
 <h3 id="3-3"><span class="section-number-3">3.3</span> Mònada Àlex</h3>
 <div class="org-src-container">
 
-<pre class="src src-haskell"><span style="color: #51afef;">type</span> <span style="color: #ECBE7B;">Rule</span> a <span style="color: #dcaeea;">=</span> <span style="color: #ECBE7B;">AlexInput</span> <span style="color: #dcaeea;">-&gt;</span> <span style="color: #ECBE7B;">Int</span> <span style="color: #dcaeea;">-&gt;</span> <span style="color: #ECBE7B;">Alex</span> a
+<pre class="src src-haskell"><span style="color: #51afef;">type</span> <span style="color: #ECBE7B;">AlexInput</span> <span style="color: #dcaeea;">=</span> (<span style="color: #ECBE7B;">AlexPosn</span>, <span style="color: #5B6268;">-- </span><span style="color: #5B6268;">current position,</span>
+                  <span style="color: #ECBE7B;">Char</span>,     <span style="color: #5B6268;">-- </span><span style="color: #5B6268;">previous char</span>
+                  [<span style="color: #ECBE7B;">Byte</span>],   <span style="color: #5B6268;">-- </span><span style="color: #5B6268;">rest of the bytes for the current char</span>
+                  <span style="color: #ECBE7B;">String</span>)   <span style="color: #5B6268;">-- </span><span style="color: #5B6268;">current input string</span>
+<span style="color: #51afef;">type</span> <span style="color: #ECBE7B;">Rule</span> a <span style="color: #dcaeea;">=</span> <span style="color: #ECBE7B;">AlexInput</span> <span style="color: #dcaeea;">-&gt;</span> <span style="color: #ECBE7B;">Int</span> <span style="color: #dcaeea;">-&gt;</span> <span style="color: #ECBE7B;">Alex</span> a
+
+<span style="color: #5B6268;">-- </span><span style="color: #5B6268;">Useful functions:</span>
+<span style="color: #c678dd;">skip</span> <span style="color: #dcaeea;">::</span> <span style="color: #ECBE7B;">Rule</span> result
+<span style="color: #c678dd;">skip</span> input len <span style="color: #dcaeea;">=</span> alexMonadScan
+
+<span style="color: #c678dd;">andBegin</span> <span style="color: #dcaeea;">::</span> <span style="color: #ECBE7B;">Rule</span> result <span style="color: #dcaeea;">-&gt;</span> <span style="color: #ECBE7B;">Int</span> <span style="color: #dcaeea;">-&gt;</span> <span style="color: #ECBE7B;">Rule</span> result
+(act &#8216;andBegin&#8216; code) input len <span style="color: #dcaeea;">=</span> <span style="color: #51afef;">do</span> alexSetStartCode code; act input len
+
+<span style="color: #c678dd;">begin</span> <span style="color: #dcaeea;">::</span> <span style="color: #ECBE7B;">Int</span> <span style="color: #dcaeea;">-&gt;</span> <span style="color: #ECBE7B;">Rule</span> result
+<span style="color: #c678dd;">begin</span> code <span style="color: #dcaeea;">=</span> skip &#8216;andBegin&#8216; code
+
+<span style="color: #c678dd;">token</span> <span style="color: #dcaeea;">::</span> (<span style="color: #ECBE7B;">AlexInput</span> <span style="color: #dcaeea;">-&gt;</span> <span style="color: #ECBE7B;">Int</span> <span style="color: #dcaeea;">-&gt;</span> token) <span style="color: #dcaeea;">-&gt;</span> <span style="color: #ECBE7B;">Rule</span> token
+<span style="color: #c678dd;">token</span> t input len <span style="color: #dcaeea;">=</span> return (t input len)
 </pre>
 </div>
 

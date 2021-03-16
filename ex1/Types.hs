@@ -1,4 +1,4 @@
--- |
+-- | Types for exercice 1
 
 {-# LANGUAGE TemplateHaskell #-}
 module Types

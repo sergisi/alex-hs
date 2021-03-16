@@ -18,10 +18,17 @@ tokens :-
 $white { skip }
 
 <macro_definition> {
-@id { token (\(_, _, _, s) len -> TMacroDef)}
+$white+ {skip}
+@id \| { token (\(_, _, _, s) len -> TMacroId s) `andBegin` macro_args}
 
 }
 
+<macro_args> {
+\| { token (\s len -> TEndMacroArgs) `andBegin` macro_def}
+@id" "*"," { token (\(_, _, _, s) len -> TMoreArgs s}
+$white+ { skip }
+@id { token(\(_, _, _, s) len -> TLastArg s) }
+}
 {
 
 
@@ -38,21 +45,20 @@ getDefinitionToken = alexMonadScan
   
 scanner :: String -> Either String ([Result], [Token])
 scanner str = runAlex str $ do
-  let loop acc xs = do
+  loop [] []
+
+
+loop :: MacroAcc -> Token -> [Result]
+loop acc xs = do
                 someToken <- alexMonadScan
                 case someToken of
-                  TEOF -> return (acc, xs)
+                  TEOF -> return xs
                   TStartMacro -> do
                       idToken <- alexMonadScan
                       argsToken <- getArgsToken
                       definitionToken <- getDefinitionToken
-                      loop (ReadMacro (idToken, argsToken, definitionToken):acc) xs
-                (if someToken == TEOF
-                   then return xs
-                   else do loop acc $! (someToken:xs))
-  loop [] []
-
-
+                      loop ((idToken, argsToken, definitionToken):acc) xs
+                  _ -> do loop acc $! (someToken:xs))
 
 alexEOF = return TEOF
 
