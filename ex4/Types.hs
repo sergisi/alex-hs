@@ -12,15 +12,22 @@ data Token = TImport String
            | TMacroId String
            | TMacro
            | TMacroUse String
-           | TOther String
-           | TEndMacroArgs String
+           | TMoreArgs String
            | TLastArg String
+           | TMacroDef String
+           | TEndMacroDef
            | TEOF
+           | SomeToken String
            deriving (Show, Eq, Ord, Read)
 
-type Macro = (String, [String], String)
+type Macro = (String, [String], [String])
 
 type MacroAcc = [Macro]
 
--- @id|arg1, arg2, arg3, ..., argN| { def }
--- define @id|argsN| def
+type Import = [String]
+
+type ImportAcc = [Import]
+
+type TokenAcc = [Token]
+
+type File = (MacroAcc, ImportAcc, TokenAcc)
