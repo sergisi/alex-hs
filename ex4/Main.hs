@@ -24651,7 +24651,7 @@ alex_actions = array (0 :: Int, 132)
 
 
 parse :: String -> String
-parse s = takeWhile (\c -> and [c != " ", c != ",", c != "|"]) s
+parse s = takeWhile (\c -> and [c /= " ", c /= ",", c /= "|"]) s
 
 getIdMacro :: Alex String
 getIdMacro = do
