@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>Alex</title>
+<meta name="author" content="Joaquim Picó, Sergi Simón"/>
+<style type="text/css">
+.underline { text-decoration: underline; }
+</style>
+<link rel="stylesheet" href="/home/sergi.simon/.emacs.d/.local/straight/build/revealjs/dist/reveal.css"/>
+
+<link rel="stylesheet" href="/home/sergi.simon/.emacs.d/.local/straight/build/revealjs/dist/theme/black.css" id="theme"/>
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+<section id="sec-title-slide">
+<h1 class="title">Alex</h1><h2 class="author">Joaquim Picó, Sergi Simón</h2><p class="date">Created: 2021-03-16 mar 13:42</p>
+</section>
+<section>
+<section id="slide-1">
+<h2 id="1"><span class="section-number-2">1</span> Introducció</h2>
+<div class="outline-text-2" id="text-1">
+</div>
+</section>
+<section id="slide-1-1">
+<h3 id="1-1"><span class="section-number-3">1.1</span> Haskell</h3>
+
+</section>
+</section>
+<section>
+<section id="slide-2">
+<h2 id="2"><span class="section-number-2">2</span> Sintaxi d&rsquo;Alex</h2>
+<div class="outline-text-2" id="text-2">
+</div>
+</section>
+<section id="slide-2-1">
+<h3 id="2-1"><span class="section-number-3">2.1</span> Primer bloc d&rsquo;inicialització</h3>
+<pre class="example">
+{
+-- codi
+}
+</pre>
+</section>
+<section id="slide-2-2">
+<h3 id="2-2"><span class="section-number-3">2.2</span> Macros</h3>
+<dl>
+<dt>$set</dt><dd><code>char | [sets union]</code></dd>
+<dt>@regex</dt><dd><code>$someSet+</code></dd>
+
+</dl>
+</section>
+<section id="slide-2-3">
+<h3 id="2-3"><span class="section-number-3">2.3</span> Normes</h3>
+<pre class="example">
+@id :-
+
+regex { rule }
+</pre>
+
+</section>
+<section id="slide-2-4">
+<h3 id="2-4"><span class="section-number-3">2.4</span> Segon bloc de processament</h3>
+<pre class="example">
+{
+-- codi
+}
+</pre>
+
+</section>
+<section id="slide-2-5">
+<h3 id="2-5"><span class="section-number-3">2.5</span> Exemple</h3>
+<div class="org-src-container">
+
+<pre class="src src-haskell">{
+<span style="color: #51afef;">module</span> <span style="color: #ECBE7B;">Main</span> (main) <span style="color: #51afef;">where</span>
+}
+
+<span style="color: #dcaeea;">%</span>wrapper <span style="color: #98be65;">"basic"</span>
+
+<span style="color: #dcaeea;">$</span>digit <span style="color: #dcaeea;">=</span> <span style="color: #da8548; font-weight: bold;">0</span><span style="color: #dcaeea;">-</span><span style="color: #da8548; font-weight: bold;">9</span>      <span style="color: #5B6268;">-- </span><span style="color: #5B6268;">digits</span>
+<span style="color: #dcaeea;">$</span>alpha <span style="color: #dcaeea;">=</span> [a<span style="color: #dcaeea;">-</span>zA<span style="color: #dcaeea;">-</span><span style="color: #ECBE7B;">Z</span>]   <span style="color: #5B6268;">-- </span><span style="color: #5B6268;">alphabetic characters</span>
+<span style="color: #dcaeea;">@</span>comment <span style="color: #dcaeea;">=</span> <span style="color: #98be65;">"--"</span><span style="color: #dcaeea;">.*</span>
+
+tokens <span style="color: #c678dd;">:-</span>
+
+
+<span style="color: #dcaeea;">$</span>white<span style="color: #dcaeea;">+</span>                        ;
+<span style="color: #dcaeea;">@</span>comment                       ;
+<span style="color: #51afef;">let</span>                            { <span style="color: #dcaeea;">\</span>s <span style="color: #dcaeea;">-&gt;</span> <span style="color: #ECBE7B;">Let</span> }
+<span style="color: #51afef;">in</span>                             { <span style="color: #dcaeea;">\</span>s <span style="color: #dcaeea;">-&gt;</span> <span style="color: #ECBE7B;">In</span> }
+<span style="color: #dcaeea;">$</span>digit<span style="color: #dcaeea;">+</span>                        { <span style="color: #dcaeea;">\</span>s <span style="color: #dcaeea;">-&gt;</span> <span style="color: #ECBE7B;">Int</span> (read s) }
+[<span style="color: #dcaeea;">\=\+\-\*\/\</span>(<span style="color: #dcaeea;">\</span>)]               { <span style="color: #dcaeea;">\</span>s <span style="color: #dcaeea;">-&gt;</span> <span style="color: #ECBE7B;">Sym</span> (head s) }
+<span style="color: #dcaeea;">$</span>alpha [<span style="color: #dcaeea;">$</span>alpha <span style="color: #dcaeea;">$</span>digit <span style="color: #dcaeea;">\</span><span style="color: #51afef;">_</span> <span style="color: #dcaeea;">\</span>&#8217;]<span style="color: #dcaeea;">*</span>  { <span style="color: #dcaeea;">\</span>s <span style="color: #dcaeea;">-&gt;</span> <span style="color: #ECBE7B;">Var</span> s }
+</pre>
+</div>
+
+</section>
+<section>
+
+<div class="org-src-container">
+
+<pre class="src src-haskell">{
+<span style="color: #5B6268;">-- </span><span style="color: #5B6268;">Each action has type :: String -&gt; Token</span>
+
+<span style="color: #5B6268;">-- </span><span style="color: #5B6268;">The token type:</span>
+<span style="color: #51afef;">data</span> <span style="color: #ECBE7B;">Token</span> <span style="color: #dcaeea;">=</span> <span style="color: #ECBE7B;">Let</span> <span style="color: #dcaeea;">|</span> <span style="color: #ECBE7B;">In</span> <span style="color: #dcaeea;">|</span> <span style="color: #ECBE7B;">Sym</span> <span style="color: #ECBE7B;">Char</span>  <span style="color: #dcaeea;">|</span> <span style="color: #ECBE7B;">Var</span> <span style="color: #ECBE7B;">String</span>  <span style="color: #dcaeea;">|</span> <span style="color: #ECBE7B;">Int</span> <span style="color: #ECBE7B;">Int</span>
+  <span style="color: #51afef;">deriving</span> (<span style="color: #ECBE7B;">Eq</span>,<span style="color: #ECBE7B;">Show</span>)
+
+<span style="color: #c678dd;">main</span> <span style="color: #dcaeea;">=</span> <span style="color: #51afef;">do</span>
+  s <span style="color: #dcaeea;">&lt;-</span> getContents
+  print (alexScanTokens s)
+
+}
+</pre>
+</div>
+</section>
+</section>
+<section>
+<section id="slide-3">
+<h2 id="3"><span class="section-number-2">3</span> <i>Wrappers</i></h2>
+<ul>
+<li>gscan</li>
+<li>ByteString</li>
+
+</ul>
+</section>
+<section id="slide-3-1">
+<h3 id="3-1"><span class="section-number-3">3.1</span> Bàsic</h3>
+<div class="org-src-container">
+
+<pre class="src src-haskell"><span style="color: #51afef;">type</span> <span style="color: #ECBE7B;">Rule</span> a <span style="color: #dcaeea;">=</span> <span style="color: #ECBE7B;">String</span> <span style="color: #dcaeea;">-&gt;</span> a
+</pre>
+</div>
+</section>
+<section id="slide-3-2">
+<h3 id="3-2"><span class="section-number-3">3.2</span> PosN</h3>
+<div class="org-src-container">
+
+<pre class="src src-haskell"><span style="color: #51afef;">data</span> <span style="color: #ECBE7B;">AlexPosn</span> <span style="color: #dcaeea;">=</span> <span style="color: #ECBE7B;">AlexPn</span> <span style="color: #ECBE7B;">Int</span>  <span style="color: #5B6268;">-- </span><span style="color: #5B6268;">absolute character offset</span>
+                       <span style="color: #ECBE7B;">Int</span>  <span style="color: #5B6268;">-- </span><span style="color: #5B6268;">line number</span>
+                       <span style="color: #ECBE7B;">Int</span>  <span style="color: #5B6268;">-- </span><span style="color: #5B6268;">column number</span>
+
+<span style="color: #51afef;">type</span> <span style="color: #ECBE7B;">Rule</span> a <span style="color: #dcaeea;">=</span> <span style="color: #ECBE7B;">AlexPosn</span> <span style="color: #dcaeea;">-&gt;</span> <span style="color: #ECBE7B;">String</span> <span style="color: #dcaeea;">-&gt;</span> token
+</pre>
+</div>
+
+</section>
+<section>
+<div class="org-src-container">
+
+<pre class="src src-haskell">{
+<span style="color: #51afef;">module</span> <span style="color: #ECBE7B;">Main</span> (main) <span style="color: #51afef;">where</span>
+}
+
+<span style="color: #dcaeea;">%</span>wrapper <span style="color: #98be65;">"posn"</span>
+
+<span style="color: #dcaeea;">@</span>aba <span style="color: #dcaeea;">=</span> <span style="color: #98be65;">"aba"</span>
+<span style="color: #dcaeea;">@</span>newline <span style="color: #dcaeea;">=</span> <span style="color: #98be65;">"\n"</span>
+
+tokens <span style="color: #c678dd;">:-</span>
+
+<span style="color: #dcaeea;">@</span>aba { token (<span style="color: #dcaeea;">\</span>p s<span style="color: #dcaeea;">-&gt;</span> <span style="color: #ECBE7B;">SomeToken</span> p) }
+<span style="color: #dcaeea;">$</span>white<span style="color: #dcaeea;">+</span>  ;
+<span style="color: #dcaeea;">@</span>newline ;
+
+{
+
+<span style="color: #c678dd;">token</span> f p s <span style="color: #dcaeea;">=</span> f p s
+
+<span style="color: #51afef;">data</span> <span style="color: #ECBE7B;">Token</span> <span style="color: #dcaeea;">=</span> <span style="color: #ECBE7B;">SomeToken</span> <span style="color: #ECBE7B;">AlexPosn</span> <span style="color: #51afef;">deriving</span> (<span style="color: #ECBE7B;">Eq</span>, <span style="color: #ECBE7B;">Show</span>) 
+ 
+<span style="color: #c678dd;">main</span> <span style="color: #dcaeea;">=</span> <span style="color: #51afef;">do</span>
+    s <span style="color: #dcaeea;">&lt;-</span> getContents
+    print <span style="color: #dcaeea;">$</span> alexScanTokens s
+}
+</pre>
+</div>
+</section>
+<section>
+<pre class="example">
+aba
+aba
+aba
+aba
+aba
+</pre>
+<p>
+Produeix
+</p>
+<pre class="example">
+[ SomeToken (AlexPn 0 1 1)
+, SomeToken (AlexPn 4 2 1)
+, SomeToken (AlexPn 8 3 1)
+, SomeToken (AlexPn 12 4 1)
+, SomeToken (AlexPn 16 5 1)
+]
+</pre>
+</section>
+<section id="slide-3-3">
+<h3 id="3-3"><span class="section-number-3">3.3</span> Mònada Àlex</h3>
+<div class="org-src-container">
+
+<pre class="src src-haskell"><span style="color: #51afef;">type</span> <span style="color: #ECBE7B;">AlexInput</span> <span style="color: #dcaeea;">=</span> (<span style="color: #ECBE7B;">AlexPosn</span>, <span style="color: #5B6268;">-- </span><span style="color: #5B6268;">current position,</span>
+                  <span style="color: #ECBE7B;">Char</span>,     <span style="color: #5B6268;">-- </span><span style="color: #5B6268;">previous char</span>
+                  [<span style="color: #ECBE7B;">Byte</span>],   <span style="color: #5B6268;">-- </span><span style="color: #5B6268;">rest of the bytes for the current char</span>
+                  <span style="color: #ECBE7B;">String</span>)   <span style="color: #5B6268;">-- </span><span style="color: #5B6268;">current input string</span>
+<span style="color: #51afef;">type</span> <span style="color: #ECBE7B;">Rule</span> a <span style="color: #dcaeea;">=</span> <span style="color: #ECBE7B;">AlexInput</span> <span style="color: #dcaeea;">-&gt;</span> <span style="color: #ECBE7B;">Int</span> <span style="color: #dcaeea;">-&gt;</span> <span style="color: #ECBE7B;">Alex</span> a
+
+<span style="color: #5B6268;">-- </span><span style="color: #5B6268;">Useful functions:</span>
+<span style="color: #c678dd;">skip</span> <span style="color: #dcaeea;">::</span> <span style="color: #ECBE7B;">Rule</span> result
+<span style="color: #c678dd;">skip</span> input len <span style="color: #dcaeea;">=</span> alexMonadScan
+
+<span style="color: #c678dd;">andBegin</span> <span style="color: #dcaeea;">::</span> <span style="color: #ECBE7B;">Rule</span> result <span style="color: #dcaeea;">-&gt;</span> <span style="color: #ECBE7B;">Int</span> <span style="color: #dcaeea;">-&gt;</span> <span style="color: #ECBE7B;">Rule</span> result
+(act &#8216;andBegin&#8216; code) input len <span style="color: #dcaeea;">=</span> <span style="color: #51afef;">do</span> alexSetStartCode code; act input len
+
+<span style="color: #c678dd;">begin</span> <span style="color: #dcaeea;">::</span> <span style="color: #ECBE7B;">Int</span> <span style="color: #dcaeea;">-&gt;</span> <span style="color: #ECBE7B;">Rule</span> result
+<span style="color: #c678dd;">begin</span> code <span style="color: #dcaeea;">=</span> skip &#8216;andBegin&#8216; code
+
+<span style="color: #c678dd;">token</span> <span style="color: #dcaeea;">::</span> (<span style="color: #ECBE7B;">AlexInput</span> <span style="color: #dcaeea;">-&gt;</span> <span style="color: #ECBE7B;">Int</span> <span style="color: #dcaeea;">-&gt;</span> token) <span style="color: #dcaeea;">-&gt;</span> <span style="color: #ECBE7B;">Rule</span> token
+<span style="color: #c678dd;">token</span> t input len <span style="color: #dcaeea;">=</span> return (t input len)
+</pre>
+</div>
+
+</section>
+<section>
+<div class="org-src-container">
+
+<pre class="src src-haskell">{
+<span style="color: #51afef;">module</span> <span style="color: #ECBE7B;">Main</span> <span style="color: #51afef;">where</span>
+<span style="color: #51afef;">import</span> <span style="color: #ECBE7B;">Types</span>
+}
+
+<span style="color: #dcaeea;">%</span>wrapper <span style="color: #98be65;">"monad"</span>
+
+<span style="color: #dcaeea;">@</span>reservedWords <span style="color: #dcaeea;">=</span> <span style="color: #98be65;">"where"</span> <span style="color: #dcaeea;">|</span> <span style="color: #98be65;">"as"</span> <span style="color: #dcaeea;">|</span> <span style="color: #98be65;">"case of"</span> <span style="color: #dcaeea;">|</span> <span style="color: #98be65;">"class"</span> <span style="color: #dcaeea;">|</span> <span style="color: #98be65;">"data"</span> <span style="color: #dcaeea;">|</span> <span style="color: #98be65;">"data family"</span> <span style="color: #dcaeea;">|</span> <span style="color: #98be65;">"data instance"</span> <span style="color: #dcaeea;">|</span> <span style="color: #98be65;">"default"</span> <span style="color: #dcaeea;">|</span> <span style="color: #98be65;">"deriving"</span> <span style="color: #dcaeea;">|</span> <span style="color: #98be65;">"deriving instance"</span> <span style="color: #dcaeea;">|</span> <span style="color: #98be65;">"do"</span> <span style="color: #dcaeea;">|</span> <span style="color: #98be65;">"forall"</span> <span style="color: #dcaeea;">|</span> <span style="color: #98be65;">"foreing"</span> <span style="color: #dcaeea;">|</span> <span style="color: #98be65;">"hiding"</span> <span style="color: #dcaeea;">|</span> <span style="color: #98be65;">"if"</span> <span style="color: #dcaeea;">|</span> <span style="color: #98be65;">"then"</span> <span style="color: #dcaeea;">|</span> <span style="color: #98be65;">"else"</span> <span style="color: #dcaeea;">|</span> <span style="color: #98be65;">"import"</span> <span style="color: #dcaeea;">|</span> <span style="color: #98be65;">"infix"</span> <span style="color: #dcaeea;">|</span> <span style="color: #98be65;">"infixl"</span> <span style="color: #dcaeea;">|</span> <span style="color: #98be65;">"infixr"</span> <span style="color: #dcaeea;">|</span> <span style="color: #98be65;">"instance"</span> <span style="color: #dcaeea;">|</span> <span style="color: #98be65;">"let"</span> <span style="color: #dcaeea;">|</span> <span style="color: #98be65;">"in"</span> <span style="color: #dcaeea;">|</span> <span style="color: #98be65;">"mdo"</span> <span style="color: #dcaeea;">|</span> <span style="color: #98be65;">"module"</span> <span style="color: #dcaeea;">|</span> <span style="color: #98be65;">"newtype"</span> <span style="color: #dcaeea;">|</span> <span style="color: #98be65;">"proc"</span> <span style="color: #dcaeea;">|</span> <span style="color: #98be65;">"qualified"</span> <span style="color: #dcaeea;">|</span> <span style="color: #98be65;">"rec"</span> <span style="color: #dcaeea;">|</span> <span style="color: #98be65;">"type"</span> <span style="color: #dcaeea;">|</span> <span style="color: #98be65;">"type family"</span> <span style="color: #dcaeea;">|</span> <span style="color: #98be65;">"type instance"</span> <span style="color: #dcaeea;">|</span> <span style="color: #98be65;">"#"</span>
+<span style="color: #dcaeea;">@</span>identifiers <span style="color: #dcaeea;">=</span> [_a<span style="color: #dcaeea;">-</span>zA<span style="color: #dcaeea;">-</span><span style="color: #ECBE7B;">Z</span>][_a<span style="color: #dcaeea;">-</span>zA<span style="color: #dcaeea;">-</span><span style="color: #ECBE7B;">Z0</span><span style="color: #dcaeea;">-</span><span style="color: #da8548; font-weight: bold;">9</span>]<span style="color: #dcaeea;">*\</span><span style="color: #ECBE7B;">'</span><span style="color: #98be65;">?</span>
+<span style="color: #dcaeea;">@</span>constants <span style="color: #dcaeea;">=</span> ([<span style="color: #da8548; font-weight: bold;">0</span><span style="color: #dcaeea;">-</span><span style="color: #da8548; font-weight: bold;">9</span>]<span style="color: #dcaeea;">+</span> <span style="color: #dcaeea;">|\</span><span style="color: #ECBE7B;">"</span><span style="color: #98be65;">([^\"]|\\\")*[^\\]\")</span>
+<span style="color: #dcaeea;">$</span>operators <span style="color: #dcaeea;">=</span> [<span style="color: #dcaeea;">\-</span> <span style="color: #dcaeea;">\+</span> <span style="color: #dcaeea;">\*</span> <span style="color: #dcaeea;">\/</span> <span style="color: #dcaeea;">\^</span> <span style="color: #dcaeea;">&amp;</span> <span style="color: #dcaeea;">\|</span> <span style="color: #dcaeea;">&gt;</span> <span style="color: #dcaeea;">\&lt;</span> <span style="color: #dcaeea;">\=</span> <span style="color: #dcaeea;">\\</span> <span style="color: #dcaeea;">\.</span> <span style="color: #dcaeea;">\!</span> <span style="color: #ECBE7B;">:</span> <span style="color: #dcaeea;">@</span> <span style="color: #dcaeea;">\</span><span style="color: #51afef;">_</span> <span style="color: #dcaeea;">\~</span> ]
+<span style="color: #dcaeea;">$</span>delimiter <span style="color: #dcaeea;">=</span> [<span style="color: #dcaeea;">\</span>( <span style="color: #dcaeea;">\</span>) <span style="color: #dcaeea;">\</span>[ <span style="color: #dcaeea;">\</span>] <span style="color: #dcaeea;">\</span>; <span style="color: #dcaeea;">\</span>, <span style="color: #dcaeea;">\</span>{ <span style="color: #dcaeea;">\</span>} ]
+<span style="color: #dcaeea;">@</span>separator <span style="color: #dcaeea;">=</span> <span style="color: #dcaeea;">$</span>white<span style="color: #dcaeea;">+</span>
+<span style="color: #dcaeea;">@</span>inlineComment <span style="color: #dcaeea;">=</span> <span style="color: #98be65;">"--"</span><span style="color: #dcaeea;">.*</span>
+
+<span style="color: #dcaeea;">@</span>multilineCommentStart <span style="color: #dcaeea;">=</span> <span style="color: #98be65;">"{-"</span>
+<span style="color: #dcaeea;">@</span>multilineCommentEnd <span style="color: #dcaeea;">=</span> <span style="color: #98be65;">"-}"</span>
+
+</pre>
+</div>
+</section>
+<section>
+<div class="org-src-container">
+
+<pre class="src src-haskell">tokens <span style="color: #c678dd;">:-</span>
+
+<span style="color: #dcaeea;">&lt;</span><span style="color: #da8548; font-weight: bold;">0</span><span style="color: #dcaeea;">&gt;</span> {
+<span style="color: #dcaeea;">^$</span>white        { tokenize <span style="color: #ECBE7B;">DelimiterSymbol</span> }
+<span style="color: #dcaeea;">@</span>reservedWords { tokenize <span style="color: #ECBE7B;">ReservedWord</span> }
+<span style="color: #dcaeea;">@</span>identifiers   { tokenize <span style="color: #ECBE7B;">Identifier</span> }
+<span style="color: #dcaeea;">@</span>constants     { tokenize <span style="color: #ECBE7B;">Constant</span> }
+<span style="color: #dcaeea;">$</span>operators<span style="color: #dcaeea;">+</span>    { tokenize <span style="color: #ECBE7B;">Operator</span> }
+<span style="color: #dcaeea;">$</span>delimiter     { tokenize <span style="color: #ECBE7B;">DelimiterSymbol</span> }
+<span style="color: #dcaeea;">@</span>separator     { tokenize <span style="color: #ECBE7B;">SeparatorSymbol</span> }
+<span style="color: #dcaeea;">@</span>inlineComment { tokenize <span style="color: #ECBE7B;">Comment</span> }
+
+<span style="color: #dcaeea;">@</span>multilineCommentStart { tokenize <span style="color: #ECBE7B;">Comment</span> <span style="color: #dcaeea;">`andBegin`</span> comment_code}
+}
+<span style="color: #dcaeea;">&lt;</span>comment_code<span style="color: #dcaeea;">&gt;</span> {
+<span style="color: #dcaeea;">@</span>multilineCommentEnd { begin <span style="color: #da8548; font-weight: bold;">0</span> }
+<span style="color: #dcaeea;">$</span>white<span style="color: #dcaeea;">+</span> ;
+<span style="color: #dcaeea;">$</span>printable<span style="color: #dcaeea;">+</span> ;
+}
+
+</pre>
+</div>
+</section>
+<section>
+<div class="org-src-container">
+
+<pre class="src src-haskell">{
+
+<span style="color: #c678dd;">tokenize</span> <span style="color: #dcaeea;">::</span> <span style="color: #ECBE7B;">Token</span> <span style="color: #dcaeea;">-&gt;</span> <span style="color: #ECBE7B;">AlexAction</span> <span style="color: #ECBE7B;">Token</span>
+<span style="color: #c678dd;">tokenize</span> t <span style="color: #dcaeea;">=</span> token (<span style="color: #dcaeea;">\</span><span style="color: #51afef;">_</span> <span style="color: #51afef;">_</span> <span style="color: #dcaeea;">-&gt;</span> t)
+
+<span style="color: #c678dd;">scanner</span> str <span style="color: #dcaeea;">=</span> runAlex str <span style="color: #dcaeea;">$</span> loop (<span style="color: #ECBE7B;">Result</span> <span style="color: #da8548; font-weight: bold;">0</span> <span style="color: #da8548; font-weight: bold;">0</span> <span style="color: #da8548; font-weight: bold;">0</span> <span style="color: #da8548; font-weight: bold;">0</span> <span style="color: #da8548; font-weight: bold;">0</span> <span style="color: #da8548; font-weight: bold;">0</span> <span style="color: #da8548; font-weight: bold;">0</span>)
+
+<span style="color: #c678dd;">loop</span> <span style="color: #dcaeea;">::</span> <span style="color: #ECBE7B;">Result</span> <span style="color: #dcaeea;">-&gt;</span> <span style="color: #ECBE7B;">Alex</span> <span style="color: #ECBE7B;">Result</span>
+<span style="color: #c678dd;">loop</span> tok <span style="color: #dcaeea;">=</span> <span style="color: #51afef;">do</span>
+  someToken <span style="color: #dcaeea;">&lt;-</span> alexMonadScan
+  (<span style="color: #51afef;">if</span> someToken <span style="color: #dcaeea;">==</span> <span style="color: #ECBE7B;">EOFToken</span>
+    <span style="color: #51afef;">then</span> return tok
+    <span style="color: #51afef;">else</span> <span style="color: #51afef;">do</span> loop <span style="color: #dcaeea;">$</span> updateResult tok someToken)
+
+
+
+<span style="color: #c678dd;">alexEOF</span> <span style="color: #dcaeea;">=</span> return <span style="color: #ECBE7B;">EOFToken</span>
+
+<span style="color: #c678dd;">main</span> <span style="color: #dcaeea;">=</span> <span style="color: #51afef;">do</span>
+  s <span style="color: #dcaeea;">&lt;-</span> getContents
+  print <span style="color: #dcaeea;">$</span> scanner s
+}
+
+</pre>
+</div>
+</section>
+<section id="slide-3-3-1">
+<h4 id="3-3-1"><span class="section-number-4">3.3.1</span> Mònada amb un estat definit</h4>
+
+</section>
+</section>
+<section>
+<section id="slide-4">
+<h2 id="4"><span class="section-number-2">4</span> Processament de múltiples fitxers</h2>
+<div class="outline-text-2" id="text-4">
+</div>
+</section>
+<section id="slide-4-1">
+<h3 id="4-1"><span class="section-number-3">4.1</span> IO Mònada</h3>
+<p>
+Només es pot llegir fitxers en la mònada <code>IO</code>, ja que haskell
+diferencia les funcions pures de les impures en temps de compilació.
+</p>
+<div class="org-src-container">
+
+<pre class="src src-haskell"><span style="color: #c678dd;">main</span> <span style="color: #dcaeea;">::</span> <span style="color: #ECBE7B;">IO</span> <span style="color: #ECBE7B;">()</span>
+</pre>
+</div>
+
+</section>
+<section id="slide-4-2">
+<h3 id="4-2"><span class="section-number-3">4.2</span> Problema</h3>
+<p>
+El preprocessament de macros i imports és impur:
+</p>
+<ul>
+<li>Les macros requereixen d&rsquo;un estat global</li>
+<li>Els imports requereixen de la lectura de fitxers.</li>
+
+</ul>
+
+</section>
+<section id="slide-4-3">
+<h3 id="4-3"><span class="section-number-3">4.3</span> Solució de les macros</h3>
+<ul>
+<li>Les macros es poden mantenir a l&rsquo;estat de la mònada</li>
+
+</ul>
+
+</section>
+<section id="slide-4-4">
+<h3 id="4-4"><span class="section-number-3">4.4</span> Solució dels imports</h3>
+<p>
+Postprocessament
+</p>
+
+</section>
+</section>
+<section>
+<section id="slide-5">
+<h2 id="5"><span class="section-number-2">5</span> Gràcies per la vostra atenció</h2>
+</section>
+</section>
+</div>
+</div>
+<script src="/home/sergi.simon/.emacs.d/.local/straight/build/revealjs/dist/reveal.js"></script>
+<script src="/home/sergi.simon/.emacs.d/.local/straight/build/revealjs/plugin/markdown/markdown.js"></script>
+<script src="/home/sergi.simon/.emacs.d/.local/straight/build/revealjs/plugin/notes/notes.js"></script>
+<script src="/home/sergi.simon/.emacs.d/.local/straight/build/revealjs/plugin/search/search.js"></script>
+<script src="/home/sergi.simon/.emacs.d/.local/straight/build/revealjs/plugin/zoom/zoom.js"></script>
+<script>
+// Full list of configuration options available here:
+// https://github.com/hakimel/reveal.js#configuration
+Reveal.initialize({
+
+controls: true,
+progress: true,
+history: false,
+center: true,
+slideNumber: 'c',
+rollingLinks: false,
+keyboard: true,
+mouseWheel: false,
+fragmentInURL: false,
+hashOneBasedIndex: false,
+pdfSeparateFragments: true,
+
+overview: true,
+
+transition: 'convex',
+transitionSpeed: 'default',
+
+// Plugins with reveal.js 4.x
+plugins: [ RevealMarkdown, RevealNotes, RevealSearch, RevealZoom ],
+
+// Optional libraries used to extend reveal.js
+dependencies: [
+]
+
+});
+</script>
+</body>
+</html>

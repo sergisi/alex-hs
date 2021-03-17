@@ -1,0 +1,325 @@
+#+TITLE: Alex
+#+author: Joaquim Picó, Sergi Simón
+
+#+OPTIONS: toc:nil
+
+#+begin_comment
+Màx.: 20mins
+15mins
+
+Introducció: Quim
+Sintaxi Alex
+Sintaxi alex:
+- Primer bloc :: quim
+- Macros :: quim
+- Regles :: sergi
+- segon bloc :: Sergi
+- Exemple :: Sergi
+Wrappers
+- intro :: sergi
+- basic :: quim
+- posn :: quim
+- monada :: sergi
+Ex4
+- IO :: quim
+- problema :: quim
+- sols ::
+- sol IO :: sergi
+Gràcies per la vostra atenció.
+#+end_comment
+* Introducció
+** Haskell
+#+begin_comment
+És un llenguatge purament funcional, fortament tipat,
+i els actuals caps del compilador del llenguatge tenen
+una peculiar forma d'encarar l'evolució del llenguatge.
+
++ Es lligat a l'academia
++ Explicar que existeixen les extensions
++ Diferencia les funcions pures amb les que tenen
+  efectes secundàris (escriure a la consola).
+
++ Alex esta basat en lex/flex
+#+end_comment
+
+* Sintaxi d'Alex
+** Primer bloc d'inicialització
+#+begin_src
+{
+-- codi
+}
+#+end_src
+
+#+begin_comment
+Imports i extensions de llenguatge
+#+end_comment
+** Macros
++ $set :: ~char | [sets union]~
++ @regex :: ~$someSet+~
+#+begin_comment
+Diferencia entre
+$charsSet
+@regex
+I sintaxi
+#+end_comment
+** Normes
+
+#+BEGIN_SRC
+@id :-
+
+regex { rule }
+#+END_SRC
+
+#+begin_comment
+Match de norma s'executa un codi amb un tipus prefixat.
+
+Els wrappers, que parlarem més endevant faciliten aquestes normes.
+
+Les normes son funcions amb certs paràmetres d'entrada i de sortida.
+#+end_comment
+
+** Segon bloc de processament
+#+begin_src
+{
+-- codi
+}
+#+end_src
+#+begin_comment
+En general es defineix:
+
++ El tipus de dades que es parsejen
++ Funcions auxiliars per a les normes
++ Main si es necessari
++ Si s'utilitza amb Happy (yacc per a haskell) en general es crea una funció lexer.
+#+end_comment
+
+** Exemple
+#+BEGIN_SRC haskell
+{
+module Main (main) where
+}
+
+%wrapper "basic"
+
+$digit = 0-9      -- digits
+$alpha = [a-zA-Z]   -- alphabetic characters
+@comment = "--".*
+
+tokens :-
+
+
+$white+                        ;
+@comment                       ;
+let                            { \s -> Let }
+in                             { \s -> In }
+$digit+                        { \s -> Int (read s) }
+[\=\+\-\*\/\(\)]               { \s -> Sym (head s) }
+$alpha [$alpha $digit \_ \’]*  { \s -> Var s }
+#+end_src
+
+#+reveal: split
+
+#+begin_src haskell
+{
+-- Each action has type :: String -> Token
+
+-- The token type:
+data Token = Let | In | Sym Char  | Var String  | Int Int
+  deriving (Eq,Show)
+
+main = do
+  s <- getContents
+  print (alexScanTokens s)
+
+}
+#+END_SRC
+* /Wrappers/
+#+begin_comment
+Hi ha molts tipus diferents de wrappers, comentarem els més utilitzats
+
+Comentar els ByteString (més eficients, no els hem necessitat). Tots els
+que comentarem tenen aquest mode
+
+gscan Wrapper es manté per raons històriques.
+#+end_comment
++ gscan
++ ByteString
+** Bàsic
+#+BEGIN_SRC haskell
+type Rule a = String -> a
+#+END_SRC
+** PosN
+#+BEGIN_SRC haskell
+data AlexPosn = AlexPn Int  -- absolute character offset
+                       Int  -- line number
+                       Int  -- column number
+
+type Rule a = AlexPosn -> String -> token
+#+END_SRC
+
+#+reveal: split
+#+BEGIN_SRC haskell
+{
+module Main (main) where
+}
+
+%wrapper "posn"
+
+@aba = "aba"
+@newline = "\n"
+
+tokens :-
+
+@aba { token (\p s-> SomeToken p) }
+$white+  ;
+@newline ;
+
+{
+
+token f p s = f p s
+
+data Token = SomeToken AlexPosn deriving (Eq, Show) 
+ 
+main = do
+    s <- getContents
+    print $ alexScanTokens s
+}
+#+END_SRC
+#+reveal: split
+#+BEGIN_SRC
+aba
+aba
+aba
+aba
+aba
+#+END_SRC
+Produeix
+#+BEGIN_SRC
+[ SomeToken (AlexPn 0 1 1)
+, SomeToken (AlexPn 4 2 1)
+, SomeToken (AlexPn 8 3 1)
+, SomeToken (AlexPn 12 4 1)
+, SomeToken (AlexPn 16 5 1)
+]
+#+END_SRC
+** Mònada Àlex
+#+BEGIN_SRC haskell
+type AlexInput = (AlexPosn, -- current position,
+                  Char,     -- previous char
+                  [Byte],   -- rest of the bytes for the current char
+                  String)   -- current input string
+type Rule a = AlexInput -> Int -> Alex a
+
+-- Useful functions:
+skip :: Rule result
+skip input len = alexMonadScan
+
+andBegin :: Rule result -> Int -> Rule result
+(act ‘andBegin‘ code) input len = do alexSetStartCode code; act input len
+
+begin :: Int -> Rule result
+begin code = skip ‘andBegin‘ code
+
+token :: (AlexInput -> Int -> token) -> Rule token
+token t input len = return (t input len)
+#+END_SRC
+
+#+reveal: split
+#+begin_src haskell
+{
+module Main where
+import Types
+}
+
+%wrapper "monad"
+
+@reservedWords = "where" | "as" | "case of" | "class" | "data" | "data family" | "data instance" | "default" | "deriving" | "deriving instance" | "do" | "forall" | "foreing" | "hiding" | "if" | "then" | "else" | "import" | "infix" | "infixl" | "infixr" | "instance" | "let" | "in" | "mdo" | "module" | "newtype" | "proc" | "qualified" | "rec" | "type" | "type family" | "type instance" | "#"
+@identifiers = [_a-zA-Z][_a-zA-Z0-9]*\'?
+@constants = ([0-9]+ |\"([^\"]|\\\")*[^\\]\")
+$operators = [\- \+ \* \/ \^ & \| > \< \= \\ \. \! : @ \_ \~ ]
+$delimiter = [\( \) \[ \] \; \, \{ \} ]
+@separator = $white+
+@inlineComment = "--".*
+
+@multilineCommentStart = "{-"
+@multilineCommentEnd = "-}"
+
+#+end_src
+#+reveal: split
+#+begin_src haskell
+tokens :-
+
+<0> {
+^$white        { tokenize DelimiterSymbol }
+@reservedWords { tokenize ReservedWord }
+@identifiers   { tokenize Identifier }
+@constants     { tokenize Constant }
+$operators+    { tokenize Operator }
+$delimiter     { tokenize DelimiterSymbol }
+@separator     { tokenize SeparatorSymbol }
+@inlineComment { tokenize Comment }
+
+@multilineCommentStart { tokenize Comment `andBegin` comment_code}
+}
+<comment_code> {
+@multilineCommentEnd { begin 0 }
+$white+ ;
+$printable+ ;
+}
+
+#+end_src
+#+reveal: split
+#+begin_src haskell
+{
+
+tokenize :: Token -> AlexAction Token
+tokenize t = token (\_ _ -> t)
+
+scanner str = runAlex str $ loop (Result 0 0 0 0 0 0 0)
+
+loop :: Result -> Alex Result
+loop tok = do
+  someToken <- alexMonadScan
+  (if someToken == EOFToken
+    then return tok
+    else do loop $ updateResult tok someToken)
+
+
+
+alexEOF = return EOFToken
+
+main = do
+  s <- getContents
+  print $ scanner s
+}
+
+#+end_src
+*** Mònada amb un estat definit
+
+* Processament de múltiples fitxers
+** IO Mònada
+Només es pot llegir fitxers en la mònada ~IO~, ja que haskell
+diferencia les funcions pures de les impures en temps de compilació.
+#+BEGIN_SRC haskell
+main :: IO ()
+#+END_SRC
+
+** Problema
+El preprocessament de macros i imports és impur:
++ Les macros requereixen d'un estat global
++ Els imports requereixen de la lectura de fitxers.
+
+** Solució de les macros
++ Les macros es poden mantenir a l'estat de la mònada
+
+** Solució dels imports
+Postprocessament
+#+begin_comment
+GHC, el compilador de haskell, realitzar els imports després
+de l'anàlisi lèxic i abans de l'anàlisi sintàctic.
+
+Es marquen els imports com un token normal i després es processen. Un aventatge
+de fer-ho així és la capacitat de 
+#+end_comment
+
+* Gràcies per la vostra atenció
