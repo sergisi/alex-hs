@@ -15,7 +15,7 @@ $idContinue = [$idStart 0-9 \_ ]
 $operators = [\- \+ \* \/ \^ & \| > \< \= \\ \. \! : @ \_ \~ ]
 $delimiter = [\( \) \[ \] \; \, \{ \} ]
 @inlineComment = "--".*
-$fileName = ^[\w,\s-]+\.[A-Za-z]{3}$
+@fileName = [a-zA-Z0-9\_\-]+\.[a-z]{3}
 @validTokens = @reservedWords | @identifiers | @constants | $operators | $delimiter
 @macroArgs = \| ( " "*@id" "* (","" "*@id" "*)*)* \|
 
@@ -33,20 +33,20 @@ $white+ {skip}
 }
 
 <macro_args> {
-@id" "*\|" "*{ { token(\(_, _, _, s) len -> TLastArg s) `andBegin` macro_def}
+@id" "*\|" "*\{ { token(\(_, _, _, s) len -> TLastArg s) `andBegin` macro_def}
 @id" "*","  { token (\(_, _, _, s) len -> TMoreArgs s}
 $white+ { skip }
 }
 
-<macro_def>{
+<macro_def> {
 \} { token (\(_ _ _ s) len -> TEndMacroDef)}
 $white+ {skip}
 @validTokens { token (\(_ _ _ s) len -> TMacroDef s) } 
 }
 
-<start_import>{
+<start_import> {
 $white+ { skip }
-$filename {token (\(_ _ _ s) len -> TFile s)}
+@fileName { token (\(_ _ _ s) len -> TFile s) }
 }
 
 {
