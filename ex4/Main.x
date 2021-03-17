@@ -15,12 +15,14 @@ $idContinue = [$idStart 0-9 \_ ]
 $operators = [\- \+ \* \/ \^ & \| > \< \= \\ \. \! : @ \_ \~ ]
 $delimiter = [\( \) \[ \] \; \, \{ \} ]
 @inlineComment = "--".*
+$fileName = ^[\w,\s-]+\.[A-Za-z]{3}$
 @validTokens = @reservedWords | @identifiers | @constants | $operators | $delimiter
 @macroArgs = \| ( " "*@id" "* (","" "*@id" "*)*)* \|
 
   
 tokens :-
 "define " { token (\_ _ = TMacro) `andBegin` start_macro }
+"import " { token (\_ _ = TImport) `andBegin` start_import}
 $white { skip }
 @validTokens {token (\_ s) = SomeToken s}
 
@@ -37,9 +39,14 @@ $white+ { skip }
 }
 
 <macro_def>{
-\} { token (\s len -> TEndMacroDef)}
+\} { token (\(_ _ _ s) len -> TEndMacroDef)}
 $white+ {skip}
-@validTokens { token (\s len -> TMacroDef s) } 
+@validTokens { token (\(_ _ _ s) len -> TMacroDef s) } 
+}
+
+<start_import>{
+$white+ { skip }
+$filename {token (\(_ _ _ s) len -> TFile s)}
 }
 
 {
@@ -68,24 +75,32 @@ getDefinitionToken = do
                         case arg of
                           TMacroDef s -> loop $! s:acc
                           TEndMacroDef -> return acc
+
+getFileName :: Alex String
+getFileName = do
+                file <- alexMonadScan
+                case file of
+                  TFile s -> return s
   
-scanner :: String -> Either String File
+scanner :: String -> Either String [Token]
 scanner str = runAlex str $ do
-  loop [] [] []
+   loop [] []
 
 
-loop :: MacroAcc -> ImportAcc -> TokenAcc -> File
-loop macors imports code = do
+loop :: MacroAcc -> TokenAcc -> [Token]
+loop macors code = do
                 someToken <- alexMonadScan
                 case someToken of
-                  TEOF -> return (macros, imports, code)
+                  TEOF -> return code
                   TMacro -> do
                       idToken <- getIdMacro
                       argsToken <- getArgsToken
                       definitionToken <- getDefinitionToken
-                      loop ((idToken, argsToken, definitionToken):macros) imports code
-                  TImport s -> do
-                  _ -> do loop macros imports $! (someToken:code))
+                      loop ((idToken, argsToken, definitionToken):macros) code
+                  TImport -> do
+                      file <- getFileName
+                      loop macros (file:code)
+                  _ -> do loop macros (someToken:code)
 
 alexEOF = return TEOF
 

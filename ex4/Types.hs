@@ -8,7 +8,8 @@ data Result = Processed String
             | LEOF
             deriving (Show, Eq, Ord, Read)
 
-data Token = TImport String
+data Token = TImport
+           | TFile String
            | TMacroId String
            | TMacro
            | TMacroUse String
@@ -24,10 +25,4 @@ type Macro = (String, [String], [String])
 
 type MacroAcc = [Macro]
 
-type Import = [String]
-
-type ImportAcc = [Import]
-
 type TokenAcc = [Token]
-
-type File = (MacroAcc, ImportAcc, TokenAcc)
