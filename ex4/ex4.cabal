@@ -21,6 +21,23 @@ maintainer:         sergi.simon@ce.eurecat.org
 -- category:
 extra-source-files: CHANGELOG.md
 
+common common-imports
+        
+
+library
+     exposed-modules:       Types,
+                            Macros
+
+    -- Modules included in this executable, other than Main.
+    -- other-modules:
+
+    -- LANGUAGE extensions used by modules in this package.
+    -- other-extensions:
+    build-depends:    base ^>=4.12.0.0,
+                      array,
+                      containers
+    -- hs-source-dirs:   app
+    default-language: Haskell2010
 executable ex4
     main-is:          Main.hs
     other-modules:       Types
@@ -31,6 +48,16 @@ executable ex4
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
     build-depends:    base ^>=4.12.0.0,
-                      array
+                      array,
+                      containers
     -- hs-source-dirs:   app
     default-language: Haskell2010
+
+test-suite MacrosTestSuite
+    build-depends:  ex4
+    type:           exitcode-stdio-1.0
+    hs-source-dirs: tests
+    default-language: Haskell2010
+    main-is:          Main.hs
+    build-depends:    base <= 5,
+                      HUnit
