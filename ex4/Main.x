@@ -51,6 +51,7 @@ $white+ { skip }
 
 {
 
+-- Pasar parseig directament a les normes
 parse :: String -> String
 parse s = takeWhile (\c -> and [c /= " ", c /= ",", c /= "|"]) s
 
@@ -59,6 +60,7 @@ getIdMacro = do
               id <- alexMonadScan
               case id of
                 TMacroId s -> return $ parse s
+                _          -> alexError "Expected a macro id, got somethig else"
 
 getArgsToken :: Alex [String]
 getArgsToken = do
@@ -67,7 +69,9 @@ getArgsToken = do
                   case arg of
                     TMoreArgs s -> loop $! (parse s):acc
                     TLastArg s -> return s:acc
+                    _ -> alexError "Expected a macro id, got somethig else"
 
+-- Ens ho petem
 getDefinitionToken :: Alex [String]
 getDefinitionToken = do
         let loop acc = do
