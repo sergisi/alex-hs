@@ -1,6 +1,6 @@
 -- | 
 
-module Macros where
+module Macros (createDef) where
 
 import qualified Data.Map.Strict as Map
 

@@ -38,8 +38,8 @@ scanner str = runAlex str $ do
       someToken <- alexMonadScan
       (if someToken == EOFToken
          then return i
-         else do loop $! (i+1))
-  loop 0
+         else do loop $! (someToken:i))
+  loop []
 
 
 

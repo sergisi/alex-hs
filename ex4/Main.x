@@ -2,6 +2,10 @@
 module Main (main) where
 
 import Types
+
+import Macros
+
+import qualified Data.Map.Strict as Map
 }
 
 %wrapper "monad"
@@ -9,7 +13,10 @@ import Types
 $idStart = [a-zA-Z]
 $idContinue = [$idStart 0-9 \_ ]
 @id = $idStart $idContinue*
-@reservedWords = "where" | "as" | "case of" | "class" | "data" | "data family" | "data instance" | "default" | "deriving" | "deriving instance" | "do" | "forall" | "foreing" | "hiding" | "if" | "then" | "else" | "import" | "infix" | "infixl" | "infixr" | "instance" | "let" | "in" | "mdo" | "module" | "newtype" | "proc" | "qualified" | "rec" | "type" | "type family" | "type instance" | "#"
+@reservedWords = "where" | "as" | "case of" | "class" | "data" | "data family" | "data instance" | "default"
+                 | "deriving" | "deriving instance" | "do" | "forall" | "foreing" | "hiding" | "if" | "then"
+                 | "else" | "import" | "infix" | "infixl" | "infixr" | "instance" | "let" | "in" | "mdo"
+                 | "module" | "newtype" | "proc" | "qualified" | "rec" | "type" | "type family" | "type instance" | "#"
 @identifiers = [_a-zA-Z][_a-zA-Z0-9]*\'?
 @constants = ([0-9]+ |\"([^\"]|\\\")*[^\\]\")
 $operators = [\- \+ \* \/ \^ & \| > \< \= \\ \. \! : @ \_ \~ ]
@@ -21,78 +28,72 @@ $delimiter = [\( \) \[ \] \; \, \{ \} ]
 
   
 tokens :-
-"define " { token (\_ _ = TMacro) `andBegin` start_macro }
-"import " { token (\_ _ = TImport) `andBegin` start_import}
+<0> {
+"define " { token (\_ _ -> TMacro) `andBegin` start_macro }
+"import " { token (\_ _ -> TImport) `andBegin` start_import}
 $white { skip }
-@validTokens {token (\_ s) = SomeToken s}
+^.*$ { token (\(_, _, _, s) len -> SomeToken (take len s)) }
 
+}
 <start_macro> {
 $white+ {skip}
-@id \| { token (\(_, _, _, s) len -> TMacroId s) `andBegin` macro_args}
+@id \| { token (\(_, _, _, s) len -> TMacroId (take len s)) `andBegin` macro_args}
 
 }
 
 <macro_args> {
-@id" "*\|" "*\{ { token(\(_, _, _, s) len -> TLastArg s) `andBegin` macro_def}
-@id" "*","  { token (\(_, _, _, s) len -> TMoreArgs s}
 $white+ { skip }
+"," { skip }
+@id {  token (\(_, _, _, s) len -> TMoreArgs (take len s)) }
+\| $white* \{ {  token(\_ len -> TLastArg) `andBegin` macro_def }
 }
 
 <macro_def> {
-\} { token (\(_ _ _ s) len -> TEndMacroDef)}
-$white+ {skip}
-@validTokens { token (\(_ _ _ s) len -> TMacroDef s) } 
+$printable*\} { token (\(_, _, _, s) len -> TMacroDef (take len s)) `andBegin` 0}
+
 }
 
 <start_import> {
 $white+ { skip }
-@fileName { token (\(_ _ _ s) len -> TFile s) }
+@fileName { token (\(_, _, _, s) len -> TFile (take len s)) `andBegin` 0 }
 }
 
 {
-
--- Pasar parseig directament a les normes
-parse :: String -> String
-parse s = takeWhile (\c -> and [c /= " ", c /= ",", c /= "|"]) s
 
 getIdMacro :: Alex String
 getIdMacro = do
               id <- alexMonadScan
               case id of
-                TMacroId s -> return $ parse s
-                _          -> alexError "Expected a macro id, got somethig else"
+                TMacroId s -> return $! s
+                x          -> alexError $! "Expected a macro id, got: " ++ show x 
 
 getArgsToken :: Alex [String]
 getArgsToken = do
-  let loop acc = do
+  let loop' acc = do
                   arg <- alexMonadScan
                   case arg of
-                    TMoreArgs s -> loop $! (parse s):acc
-                    TLastArg s -> return s:acc
-                    _ -> alexError "Expected a macro id, got somethig else"
+                    TMoreArgs s -> loop' $! s:acc
+                    TLastArg -> return acc
+                    x          -> alexError $! "Expected a macro argument, got: " ++ show x 
+  loop' []
 
 -- Ens ho petem
-getDefinitionToken :: Alex [String]
+getDefinitionToken :: Alex String
 getDefinitionToken = do
-        let loop acc = do
                         tok <- alexMonadScan
-                        case arg of
-                          TMacroDef s -> loop $! s:acc
-                          TEndMacroDef -> return acc
+                        case tok of
+                          TMacroDef s  -> return $! trim s
+                          x            -> alexError $! "Expected a macro definition, got: " ++ show x
+                     where trim s = reverse . tail . dropWhile (/='}') $ reverse s
 
-getFileName :: Alex String
-getFileName = do
-                file <- alexMonadScan
-                case file of
-                  TFile s -> return s
-  
+
 scanner :: String -> Either String [Token]
 scanner str = runAlex str $ do
-   loop [] []
+   loop Map.empty []
 
 
-loop :: MacroAcc -> TokenAcc -> [Token]
-loop macors code = do
+loop :: MacroAcc -> TokenAcc -> Alex [Token]
+loop macros code = do
                 someToken <- alexMonadScan
                 case someToken of
                   TEOF -> return code
@@ -100,9 +101,9 @@ loop macors code = do
                       idToken <- getIdMacro
                       argsToken <- getArgsToken
                       definitionToken <- getDefinitionToken
-                      loop ((idToken, argsToken, definitionToken):macros) code
+                      loop (Map.insert idToken (createDef argsToken definitionToken) macros) code
                   TImport -> do
-                      file <- getFileName
+                      file <- alexMonadScan
                       loop macros (file:code)
                   _ -> do loop macros (someToken:code)
 

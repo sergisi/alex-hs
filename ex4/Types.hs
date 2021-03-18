@@ -1,7 +1,9 @@
 -- * Types Module
 -- | This module contains the types used by this exercice.
 
-module Types (Result(..), Token(..)) where
+module Types (Result(..), Token(..), Macro, MacroAcc, TokenAcc) where
+
+import qualified Data.Map.Strict as Map
 
 data Result = Processed String
             | LImport String
@@ -14,15 +16,15 @@ data Token = TImport
            | TMacro
            | TMacroUse String
            | TMoreArgs String
-           | TLastArg String
+           | TLastArg
            | TMacroDef String
-           | TEndMacroDef
            | TEOF
            | SomeToken String
+           | TNothing
            deriving (Show, Eq, Ord, Read)
 
-type Macro = (String, [String], [String])
+type Macro = [String] -> Either String String
 
-type MacroAcc = [Macro]
+type MacroAcc = Map.Map String Macro
 
 type TokenAcc = [Token]
