@@ -18,8 +18,8 @@ $idContinue = [$idStart 0-9 \_ ]
   
 tokens :-
 <0> {
-^"import " { token (\_ _ -> TImport) `andBegin` start_import}
-^"define " { token (\_ _ -> TMacro) `andBegin` start_macro }
+^"import"$white+ { token (\_ _ -> TImport) `andBegin` start_import}
+^"define"$white+ { token (\_ _ -> TMacro) `andBegin` start_macro }
 -- Macro Application
 @id \| { token (\(_, _, _, s) len -> TMacroUse $ take (len - 1) s) `andBegin` macro_application}
 
@@ -37,7 +37,7 @@ $white+ {skip}
 <macro_application> {
 $white+ { skip }
 "," { skip }
-[^ $white \|]+ {  token (\(_, _, _, s) len -> TMoreArgs $ take len s) }
+[^ $white \| \,]+ {  token (\(_, _, _, s) len -> TMoreArgs $ take len s) }
 \| {  token(\_ len -> TLastArg) `andBegin` 0 }
 }
 
