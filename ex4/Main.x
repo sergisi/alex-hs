@@ -118,6 +118,11 @@ loop macros code = do
 
 alexEOF = return TEOF
 
+importerFunction :: TokenAcc -> IO TokenAcc
+importerFunction = traverse f
+        where f (TFile file) = undefined
+              f other = return other
+
 main = do
   s <- getContents
   print $ scanner s
