@@ -13,43 +13,43 @@ import qualified Data.Map.Strict as Map
 $idStart = [a-zA-Z]
 $idContinue = [$idStart 0-9 \_ ]
 @id = $idStart $idContinue*
-@reservedWords = "where" | "as" | "case of" | "class" | "data" | "data family" | "data instance" | "default"
-                 | "deriving" | "deriving instance" | "do" | "forall" | "foreing" | "hiding" | "if" | "then"
-                 | "else" | "import" | "infix" | "infixl" | "infixr" | "instance" | "let" | "in" | "mdo"
-                 | "module" | "newtype" | "proc" | "qualified" | "rec" | "type" | "type family" | "type instance" | "#"
-@identifiers = [_a-zA-Z][_a-zA-Z0-9]*\'?
-@constants = ([0-9]+ |\"([^\"]|\\\")*[^\\]\")
-$operators = [\- \+ \* \/ \^ & \| > \< \= \\ \. \! : @ \_ \~ ]
-$delimiter = [\( \) \[ \] \; \, \{ \} ]
-@inlineComment = "--".*
 @fileName = [a-zA-Z0-9\_\-]+\.[a-z]{3}
-@validTokens = @reservedWords | @identifiers | @constants | $operators | $delimiter
-@macroArgs = \| ( " "*@id" "* (","" "*@id" "*)*)* \|
 
   
 tokens :-
 <0> {
-"define " { token (\_ _ -> TMacro) `andBegin` start_macro }
-"import " { token (\_ _ -> TImport) `andBegin` start_import}
-$white { skip }
-^.*$ { token (\(_, _, _, s) len -> SomeToken (take len s)) }
+^"import " { token (\_ _ -> TImport) `andBegin` start_import}
+^"define " { token (\_ _ -> TMacro) `andBegin` start_macro }
+-- Macro Application
+@id \| { token (\(_, _, _, s) len -> TMacroUse $ take (len - 1) s) `andBegin` macro_application}
+
+$white+ { token (\(_, _, _, s) len -> SomeToken (take len s)) }
+[^$white \|]+ { token (\(_, _, _, s) len -> SomeToken (take len s)) }
+\| { token $ \_ _ -> SomeToken "|" }
 
 }
 <start_macro> {
 $white+ {skip}
-@id \| { token (\(_, _, _, s) len -> TMacroId (take len s)) `andBegin` macro_args}
+@id \| { token (\(_, _, _, s) len -> TMacroId (take (len - 1) s)) `andBegin` macro_args}
 
+}
+
+<macro_application> {
+$white+ { skip }
+"," { skip }
+[^ $white \|]+ {  token (\(_, _, _, s) len -> TMoreArgs $ take len s) }
+\| {  token(\_ len -> TLastArg) `andBegin` 0 }
 }
 
 <macro_args> {
 $white+ { skip }
 "," { skip }
 @id {  token (\(_, _, _, s) len -> TMoreArgs (take len s)) }
-\| $white* \{ {  token(\_ len -> TLastArg) `andBegin` macro_def }
+\| $white* \{ {  token (\_ len -> TLastArg) `andBegin` macro_def }
 }
 
 <macro_def> {
-$printable*\} { token (\(_, _, _, s) len -> TMacroDef (take len s)) `andBegin` 0}
+$printable*\} { token (\(_, _, _, s) len -> TMacroDef $ take len s) `andBegin` 0}
 
 }
 
@@ -105,6 +105,15 @@ loop macros code = do
                   TImport -> do
                       file <- alexMonadScan
                       loop macros (file:code)
+                  TMacroUse id -> do
+                      argsToken <- getArgsToken
+                      if id `Map.member` macros
+                        then let var = macros Map.! id $ argsToken
+                          in case var of
+                                Left err -> alexError $ "Macro " ++ id ++ " produced error" ++ err
+                                Right s -> loop macros $ (SomeToken s):code
+                        else alexError $ "Macro " ++ show id ++ " is not defined.\n"
+                                       ++ "All macros defined are: " ++ show (Map.keys macros)
                   _ -> do loop macros (someToken:code)
 
 alexEOF = return TEOF

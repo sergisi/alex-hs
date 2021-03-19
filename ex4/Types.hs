@@ -12,15 +12,14 @@ data Result = Processed String
 
 data Token = TImport
            | TFile String
-           | TMacroId String
            | TMacro
-           | TMacroUse String
+           | TMacroId String
            | TMoreArgs String
            | TLastArg
            | TMacroDef String
+           | TMacroUse String
            | TEOF
            | SomeToken String
-           | TNothing
            deriving (Show, Eq, Ord, Read)
 
 type Macro = [String] -> Either String String
