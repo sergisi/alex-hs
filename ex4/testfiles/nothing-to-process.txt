@@ -1,0 +1,9 @@
+import testfiles/test-some-macros.txt
+asdf
+asdf
+asdf
+asdf
+asdf
+asdf
+asdf
+asdf

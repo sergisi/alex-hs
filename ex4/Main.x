@@ -1,11 +1,13 @@
 {
 module Main (main) where
 
+import Control.Monad.Except
+import qualified Data.Map.Strict as Map
+
 import Types
 
 import Macros
 
-import qualified Data.Map.Strict as Map
 }
 
 %wrapper "monad"
@@ -13,7 +15,7 @@ import qualified Data.Map.Strict as Map
 $idStart = [a-zA-Z]
 $idContinue = [$idStart 0-9 \_ ]
 @id = $idStart $idContinue*
-@fileName = [a-zA-Z0-9\_\-]+\.[a-z]{3}
+@fileName = [a-zA-Z0-9\_ \- \. \/]+
 
   
 tokens :-
@@ -118,12 +120,26 @@ loop macros code = do
 
 alexEOF = return TEOF
 
-importerFunction :: TokenAcc -> IO TokenAcc
-importerFunction = traverse f
-        where f (TFile file) = undefined
-              f other = return other
+importerFunction :: Token -> ExceptT String IO TokenAcc
+importerFunction (TFile file) = scanFile file
+importerFunction t = liftEither (Right [t])
 
+tokenToContent :: Token -> String
+tokenToContent (SomeToken s) = s
+tokenToContent _ = ""
+
+toString :: TokenAcc -> String
+toString = concatMap tokenToContent
+
+scanFile :: String -> ExceptT String IO TokenAcc
+scanFile file = do
+        s <- liftIO $ readFile file
+        toks <- liftEither . fmap reverse . scanner $ s
+        fmap concat $ traverse importerFunction toks
+
+
+--| Use fucking runExceptT
+main :: IO ()
 main = do
-  s <- getContents
-  print $ scanner s
+  print $ runExceptT . fmap toString $ scanFile "testfiles/test-import.txt"
 }
