@@ -135,11 +135,12 @@ scanFile :: String -> ExceptT String IO TokenAcc
 scanFile file = do
         s <- liftIO $ readFile file
         toks <- liftEither . fmap reverse . scanner $ s
-        fmap concat $ traverse importerFunction toks
+        fmap concat $ traverse importerFunction toks     
 
-
---| Use fucking runExceptT
 main :: IO ()
 main = do
-  print $ runExceptT . fmap toString $ scanFile "testfiles/test-import.txt"
+  result <- runExceptT . fmap toString $ scanFile "testfiles/test-import.txt"
+  case result of 
+      Left err ->  print err 
+      Right toks ->   writeFile "./thebigfile.txt" toks
 }
