@@ -5,6 +5,7 @@ import System.Environment (getArgs)
   
 import Control.Monad.Except
 import qualified Data.Map.Strict as Map
+import qualified Data.Set as Set
 
 import Types
 
@@ -131,9 +132,9 @@ loop macros code = do
 
 alexEOF = return TEOF
 
-importerFunction :: Token -> ExceptT String IO TokenAcc
-importerFunction (TFile file) = scanFile file
-importerFunction t            = liftEither (Right [t])
+importerFunction :: Set.Set String -> Token -> ExceptT String IO TokenAcc
+importerFunction set (TFile file) = scanFile set file
+importerFunction _   t            = liftEither (Right [t])
 
 tokenToContent :: Token -> String
 tokenToContent (SomeToken s) = s
@@ -142,11 +143,20 @@ tokenToContent _             = ""
 toString :: TokenAcc -> String
 toString = concatMap tokenToContent
 
-scanFile :: String -> ExceptT String IO TokenAcc
-scanFile file = do
-  s    <- liftIO $ readFile file
-  toks <- liftEither . fmap reverse . scanner $ s
-  fmap concat $ traverse importerFunction toks
+scanFile :: Set.Set String -> String -> ExceptT String IO TokenAcc
+scanFile set file
+  | file `Set.member` set
+  = liftEither
+    .  Left $ "Circular dependency at file: "
+    ++ file
+    ++ "\n With Set: \n\t"
+    ++ show set
+  | otherwise
+  = do
+    s    <- liftIO $ readFile file
+    toks <- liftEither . fmap reverse . scanner $ s
+    fmap concat $ traverse (importerFunction set') toks
+  where set' = file `Set.insert` set
 
 main :: IO ()
 main = do
@@ -155,9 +165,9 @@ main = do
     then error
       "To use the program execute `cabal v2-run <input-file> <output-file>`"
     else do
-      result <- runExceptT . fmap toString . scanFile $ args !! 0
+      result <- runExceptT . fmap toString . scanFile (Set.empty) $ args !! 0
       case result of
-        Left  err  -> print err
+        Left  err  -> putStrLn err
         Right toks -> writeFile (args !! 1) toks
 
 }

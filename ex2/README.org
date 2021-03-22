@@ -1,0 +1,11 @@
+* Introducció
+El requeriment:
+#+BEGIN_CITE
+Al detectar un error, l’analitzador lèxic [...].
+#+end_cite
+
+Es veu complert automàticament pels wrappers de ~pos_n~ i de
+~monad~, amb la única diferència en que en comptes d'imprimir el
+caràcter, imprimeix la columna d'aquest. Si hi hagués un problema
+en la correcció es reenviaria el treball amb aquest caràcter canviat,
+ja que copiant el wrapper i posan-t'ho a l'arxiu d'Alex es solucionaria.
