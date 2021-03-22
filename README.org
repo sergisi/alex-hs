@@ -30,6 +30,8 @@ alguns casos s'ha necessitat l'ús extern de llibreries.
   a ~3.4.0~. Per a actualitzar el cabal donat un cabal instal·lat,
   utilitza la comanda ~cabal new-install Cabal cabal-install~.
 
+** Link Repo:
+- https://github.com/sergisi/alex-hs
   
 ** Autors:
 - Joaquim Picó
