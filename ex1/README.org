@@ -1,0 +1,21 @@
+* Cas d'estudi
+
+En aquest exercisi, tot i que no és necessari, s'ha utilitzat les
+lents per a fer més fàcil el treball de l'acumulador. Les lents, en
+termes d'OO, permeten crear ~getters~ i ~setters~ automàticament. A més
+a més, fan que l'"objecte" sigui immutable (que en haskell *és* necessari),
+i permet fer /sets/ de estructures de dades internes.
+
+El problema és que per a utilitzar-ho s'ha hagut de crear un mòdul separat
+per a declarar les dades (Types.hs) ja que l'extensió de ~TemplateHaskell~
+que crea les lents entra amb conflicte amb la mateixa template de Alex.
+
+A més a més, donat que s'utilitza una llibreria per les lents, s'ha hagut
+d'utilitzar l'eina de cabal
+
+Per a executar, utilitza:
+
+#+BEGIN_SRC sh
+alex Main.x
+cabal v2-run
+#+END_SRC
