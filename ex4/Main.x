@@ -66,87 +66,98 @@ $white+ { skip }
 
 getIdMacro :: Alex String
 getIdMacro = do
-              id <- alexMonadScan
-              case id of
-                TMacroId s -> return $! s
-                x          -> alexError $! "Expected a macro id, got: " ++ show x 
+  id <- alexMonadScan
+  case id of
+    TMacroId s -> return $! s
+    x          -> alexError $! "Expected a macro id, got: " ++ show x
 
 getArgsToken :: Alex [String]
 getArgsToken = do
   let loop' acc = do
-                  arg <- alexMonadScan
-                  case arg of
-                    TMoreArgs s -> loop' $! s:acc
-                    TLastArg -> return acc
-                    x          -> alexError $! "Expected a macro argument, got: " ++ show x 
+        arg <- alexMonadScan
+        case arg of
+          TMoreArgs s -> loop' $! s : acc
+          TLastArg -> return acc
+          x -> alexError $! "Expected a macro argument, got: " ++ show x
   loop' []
 
 -- Ens ho petem
 getDefinitionToken :: Alex String
 getDefinitionToken = do
-                        tok <- alexMonadScan
-                        case tok of
-                          TMacroDef s  -> return $! trim s
-                          x            -> alexError $! "Expected a macro definition, got: " ++ show x
-                     where trim s = reverse . tail . dropWhile (/='}') $ reverse s
+  tok <- alexMonadScan
+  case tok of
+    TMacroDef s -> return $! trim s
+    x           -> alexError $! "Expected a macro definition, got: " ++ show x
+  where trim s = reverse . tail . dropWhile (/= '}') $ reverse s
 
 
 scanner :: String -> Either String [Token]
 scanner str = runAlex str $ do
-   loop Map.empty []
+  loop Map.empty []
 
 
 loop :: MacroAcc -> TokenAcc -> Alex [Token]
 loop macros code = do
-                someToken <- alexMonadScan
-                case someToken of
-                  TEOF -> return code
-                  TMacro -> do
-                      idToken <- getIdMacro
-                      argsToken <- getArgsToken
-                      definitionToken <- getDefinitionToken
-                      loop (Map.insert idToken (createDef argsToken definitionToken) macros) code
-                  TImport -> do
-                      file <- alexMonadScan
-                      loop macros (file:code)
-                  TMacroUse id -> do
-                      argsToken <- getArgsToken
-                      if id `Map.member` macros
-                        then let var = macros Map.! id $ argsToken
-                          in case var of
-                                Left err -> alexError $ "Macro " ++ id ++ " produced error" ++ err
-                                Right s -> loop macros $ (SomeToken s):code
-                        else alexError $ "Macro " ++ show id ++ " is not defined.\n"
-                                       ++ "All macros defined are: " ++ show (Map.keys macros)
-                  _ -> do loop macros (someToken:code)
+  someToken <- alexMonadScan
+  case someToken of
+    TEOF   -> return code
+    TMacro -> do
+      idToken         <- getIdMacro
+      argsToken       <- getArgsToken
+      definitionToken <- getDefinitionToken
+      loop (Map.insert idToken (createDef argsToken definitionToken) macros)
+           code
+    TImport -> do
+      file <- alexMonadScan
+      loop macros (file : code)
+    TMacroUse id -> do
+      argsToken <- getArgsToken
+      if id `Map.member` macros
+        then
+          let var = macros Map.! id $ argsToken
+          in  case var of
+                Left err ->
+                  alexError $ "Macro " ++ id ++ " produced error" ++ err
+                Right s -> loop macros $ (SomeToken s) : code
+        else
+          alexError
+          $  "Macro "
+          ++ id
+          ++ " is not defined.\n"
+          ++ "All macros defined are: "
+          ++ show (Map.keys macros)
+    _ -> do
+      loop macros (someToken : code)
 
 alexEOF = return TEOF
 
 importerFunction :: Token -> ExceptT String IO TokenAcc
 importerFunction (TFile file) = scanFile file
-importerFunction t = liftEither (Right [t])
+importerFunction t            = liftEither (Right [t])
 
 tokenToContent :: Token -> String
 tokenToContent (SomeToken s) = s
-tokenToContent _ = ""
+tokenToContent _             = ""
 
 toString :: TokenAcc -> String
 toString = concatMap tokenToContent
 
 scanFile :: String -> ExceptT String IO TokenAcc
 scanFile file = do
-        s <- liftIO $ readFile file
-        toks <- liftEither . fmap reverse . scanner $ s
-        fmap concat $ traverse importerFunction toks     
+  s    <- liftIO $ readFile file
+  toks <- liftEither . fmap reverse . scanner $ s
+  fmap concat $ traverse importerFunction toks
 
 main :: IO ()
 main = do
   args <- getArgs
-  if length args < 2 then
-    error "To use the program execute `cabal v2-run <input-file> <output-file>`"
+  if length args < 2
+    then error
+      "To use the program execute `cabal v2-run <input-file> <output-file>`"
     else do
-          result <- runExceptT . fmap toString . scanFile $ args !! 0
-          case result of 
-              Left err ->  print err 
-              Right toks ->   writeFile (args !! 1) toks
+      result <- runExceptT . fmap toString . scanFile $ args !! 0
+      case result of
+        Left  err  -> print err
+        Right toks -> writeFile (args !! 1) toks
+
 }

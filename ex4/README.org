@@ -19,7 +19,7 @@ i la "/".
 ** Sintaxi macros
 Les macros tenen la sintaxi per a la creació de:
 
-#+#+BEGIN_SRC 
+#+BEGIN_SRC 
 macro := ^"define " @id args @def
 
 #+END_SRC
@@ -34,7 +34,6 @@ nombre finit.
 La definició pot ser qualsevol cosa, però les ids per a que es
 substitueixin correctament han d'estar envoltades amb espais.
 
-* Errors que pot crear l'analitzador lèxic
 * Justificació dels requeriments
 Haskell és un llenguatge funcional estricament pur, o sigui, el tipus
 de les funcions ha de representar els efectes secundàris que pot
