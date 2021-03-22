@@ -1,0 +1,60 @@
+* Introducció
+Aquesta carpeta concreta l'exercici 4 i 5. Es concretarà la
+sintaxi d'aquest llenguatge per a includes i macros a més a més
+de la justificació dels requeriments a llibreries externes, en aquest
+cas, ~mtl~.
+
+
+* Sintaxi dels fitxers
+** Sintaxi includes
+Els includes tenen la sintaxi de
+#+begin_src
+include := ^"include " file
+#+end_src
+On fitxer es el path al directori des d'on s'executar el fitxer. No
+accepta espais, només accepta: caràcters alfanumèrics, el "-", el ".",
+i la "/".
+
+
+** Sintaxi macros
+Les macros tenen la sintaxi per a la creació de:
+
+#+BEGIN_SRC 
+macro := ^"define " @id args @def
+
+#+END_SRC
+La sintaxi de la id és el regex ~[a-zA-Z][a-z A-Z 0-9 \_ ]*~.
+
+Els arguments venen delimitats amb el caràcter "|", i contenen
+ids separats per un nombre major a 1 de caràcters en blanc i de ",".
+Es pot posar més d'una coma i de caràcter en blanc, per tant.
+Com ha afegit, les macros poden tenir N arguments, mentre sigui un
+nombre finit.
+
+La definició pot ser qualsevol cosa, però les ids per a que es
+substitueixin correctament han d'estar envoltades amb espais.
+
+* Justificació dels requeriments
+Haskell és un llenguatge funcional estricament pur, o sigui, el tipus
+de les funcions ha de representar els efectes secundàris que pot
+arribar a tenir aquest. La "interfície" en termes d'OO que representa un
+efecte secundari és la Mònada.
+
+Així, donat que el lexer pot crear parsejar un token que no coneix,
+i per tant, un error, hem d'encapsular l'efecte secundari en que
+la funció pot tenir error. Aquesta monada es coneix com a Either o
+Except.
+
+Però, els imports necessiten fer manipulacions de fitxers, i per tant
+també necessiten la mònada d'IO, que representa aquest tractament
+de dades. Aquí arriba el problema que soluciona la llibreria
+que hem utilitzat. Aquest és que les monades no son *composables*,
+pel que no podem fer automaticament ~Either . IO~. Però, hi ha moltes
+monades que poden ser composades, sempre i quan es creei un
+Transformador de Mònades. La llibreria que hem utilitzat dona la
+transformació d'~ExceptT~ que ens permet aplanar-ho amb la mònada
+d'IO. Sense aquesta llibreria, els imports no es podrien arribar a fer.
+
+
+
+

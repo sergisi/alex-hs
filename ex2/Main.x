@@ -25,7 +25,11 @@ $white { skip }
 }
 <state_comment> {
     @multilineCommentEnd { begin 0 }
-    .* { skip }
+    -- without the next two rules it would break the comments if
+    -- it werent at the start of a new line.
+    [^\- \}] { skip }
+    "-" { skip }
+    "}" { skip }
     \n { skip }
 }
 {
@@ -33,18 +37,21 @@ $white { skip }
 data Token = SomeToken | EOFToken deriving (Eq, Show)
 
 
+scanner :: String -> Either String [Token]
 scanner str = runAlex str $ do
   let loop i = do
       someToken <- alexMonadScan
       (if someToken == EOFToken
          then return i
-         else do loop $! (i+1))
-  loop 0
+         else do loop $! (someToken:i))
+  loop []
 
 
 
+alexEOF :: Alex Token
 alexEOF = return EOFToken
 
+main :: IO ()
 main = do
   s <- getContents
   print $ scanner s

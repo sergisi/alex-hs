@@ -1,0 +1,2 @@
+import testfiles/test-some-macros.txt
+import testfiles/nothing-to-process.txt

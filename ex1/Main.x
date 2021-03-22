@@ -8,7 +8,8 @@ import Types
 @reservedWords = "where" | "as" | "case of" | "class" | "data" | "data family" | "data instance" | "default" | "deriving" | "deriving instance" | "do" | "forall" | "foreing" | "hiding" | "if" | "then" | "else" | "import" | "infix" | "infixl" | "infixr" | "instance" | "let" | "in" | "mdo" | "module" | "newtype" | "proc" | "qualified" | "rec" | "type" | "type family" | "type instance" | "#"
 @identifiers = [_a-zA-Z][_a-zA-Z0-9]*\'?
 @constants = ([0-9]+ |\"([^\"]|\\\")*[^\\]\")
-$operators = [\- \+ \* \/ \^ & \| > \< \= \\ \. \! : @ \_ \~ ]
+$operatorsChar = [\- \+ \* \/ \^ & \| > \< \= \\ \. \! : @ \_ \~ \$]
+@operators = $operatorsChar+ |`@identifiers`
 $delimiter = [\( \) \[ \] \; \, \{ \} ]
 @separator = $white+
 @inlineComment = "--".*
@@ -23,7 +24,7 @@ tokens :-
 @reservedWords { tokenize ReservedWord }
 @identifiers   { tokenize Identifier }
 @constants     { tokenize Constant }
-$operators+    { tokenize Operator }
+@operators    { tokenize Operator }
 $delimiter     { tokenize DelimiterSymbol }
 @separator     { tokenize SeparatorSymbol }
 @inlineComment { tokenize Comment }
@@ -47,7 +48,7 @@ loop :: Result -> Alex Result
 loop tok = do
   someToken <- alexMonadScan
   (if someToken == EOFToken
-    then return tok
+    then return $ makeStats tok
     else do loop $ updateResult tok someToken)
 
 
