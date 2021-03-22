@@ -55,6 +55,8 @@ Transformador de Mònades. La llibreria que hem utilitzat dona la
 transformació d'~ExceptT~ que ens permet aplanar-ho amb la mònada
 d'IO. Sense aquesta llibreria, els imports no es podrien arribar a fer.
 
-
-
-
+* Com executar
+#+BEGIN_SRC sh
+alex Main.x
+cabal v2-run exe:ex4 <input-file> <output-file>
+#+END_SRC
