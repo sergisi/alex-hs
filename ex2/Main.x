@@ -40,10 +40,11 @@ data Token = SomeToken | EOFToken deriving (Eq, Show)
 scanner :: String -> Either String [Token]
 scanner str = runAlex str $ do
   let loop i = do
-      someToken <- alexMonadScan
-      (if someToken == EOFToken
-         then return i
-         else do loop $! (someToken:i))
+        someToken <- alexMonadScan
+        if someToken == EOFToken
+          then return i
+          else do
+            loop $! (someToken : i)
   loop []
 
 

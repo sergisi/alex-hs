@@ -47,9 +47,10 @@ scanner str = runAlex str $ loop (Result 0 0 0 0 0 0 0)
 loop :: Result -> Alex Result
 loop tok = do
   someToken <- alexMonadScan
-  (if someToken == EOFToken
+  if someToken == EOFToken
     then return $ makeStats tok
-    else do loop $ updateResult tok someToken)
+    else do
+      loop $ updateResult tok someToken
 
 
 
@@ -58,4 +59,5 @@ alexEOF = return EOFToken
 main = do
   s <- getContents
   print $ scanner s
+
 }

@@ -20,14 +20,16 @@ data Token = SomeToken | EOFToken deriving (Eq, Show)
 
 
 scanner :: Num a => String -> Either String a
-scanner str = runAlex str $ do loop 0
+scanner str = runAlex str $ do
+  loop 0
 
 loop :: Num a => a -> Alex a
 loop i = do
-    someToken <- alexMonadScan
-    (if someToken == EOFToken
-       then return i
-       else do loop $! (i+1))
+  someToken <- alexMonadScan
+  if someToken == EOFToken
+    then return i
+    else do
+      loop $! (i + 1)
 
 
 

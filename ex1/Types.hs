@@ -6,20 +6,21 @@ module Types
   , Token(..)
   , updateResult
   , makeStats
-  )
-where
+  ) where
 import           Lens.Micro
 import           Lens.Micro.TH
 
 
-data Result = Result { _reservedWords :: Double
-                   , _identifiers :: Double
-                   , _constants :: Double
-                   , _operators :: Double
-                   , _delimiterSymbols :: Double
-                   , _separatorSymbols :: Double
-                   , _comments :: Double
-                   } deriving (Show, Read, Eq, Ord)
+data Result = Result
+  { _reservedWords    :: Double
+  , _identifiers      :: Double
+  , _constants        :: Double
+  , _operators        :: Double
+  , _delimiterSymbols :: Double
+  , _separatorSymbols :: Double
+  , _comments         :: Double
+  }
+  deriving (Show, Read, Eq, Ord)
 
 makeLenses ''Result
 
@@ -38,6 +39,12 @@ updateResult res tok = case tok of
   EOFToken        -> res
 
 makeStats :: Result -> Result
-makeStats res@(Result 0 0 0 0 0 0 0) = res 
-makeStats (Result a b c d e f g) = Result (a/total*100) (b/total*100) (c/total*100) (d/total*100) (e/total*100) (f/total*100) (g/total*100)
-            where total = a + b + c + d + e + f + g
+makeStats res@(Result 0 0 0 0 0 0 0) = res
+makeStats (    Result a b c d e f g) = Result (a / total * 100)
+                                              (b / total * 100)
+                                              (c / total * 100)
+                                              (d / total * 100)
+                                              (e / total * 100)
+                                              (f / total * 100)
+                                              (g / total * 100)
+  where total = a + b + c + d + e + f + g
