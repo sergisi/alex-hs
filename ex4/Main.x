@@ -143,7 +143,7 @@ main :: IO ()
 main = do
   args <- getArgs
   if length args < 2 then
-    error "To use the program execute ./Main <input-file> <output-file>"
+    error "To use the program execute `cabal v2-run <input-file> <output-file>`"
     else do
           result <- runExceptT . fmap toString . scanFile $ args !! 0
           case result of 
