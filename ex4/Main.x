@@ -1,6 +1,8 @@
 {
 module Main (main) where
 
+import System.Environment (getArgs)
+  
 import Control.Monad.Except
 import qualified Data.Map.Strict as Map
 
@@ -139,8 +141,12 @@ scanFile file = do
 
 main :: IO ()
 main = do
-  result <- runExceptT . fmap toString $ scanFile "testfiles/test-import.txt"
-  case result of 
-      Left err ->  print err 
-      Right toks ->   writeFile "./thebigfile.txt" toks
+  args <- getArgs
+  if length args < 2 then
+    error "To use the program execute ./Main <input-file> <output-file>"
+    else do
+          result <- runExceptT . fmap toString . scanFile $ args !! 0
+          case result of 
+              Left err ->  print err 
+              Right toks ->   writeFile (args !! 1) toks
 }
