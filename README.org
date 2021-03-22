@@ -23,12 +23,12 @@ alguns casos s'ha necessitat l'ús extern de llibreries.
 ** Requeriments tècnics
 - Alex :: L'analitzador lèxic. Ve juntament amb la plataforma
   de haskell. En el desenvolupament, s'ha provat amb les versions
-  ~3.2.4~
+  ~3.2.4~.
 - GHC :: Compilador de haskell. S'ha utilitzat la versió ~8.6.5~.
 - Cabal :: Gestor de paquets de haskell. Ha sofert canvis dràstics
   en l'últim any, pel que es necessari una versió superior com a mínim
-  a ~3.0.0~. Per a actualitzar el cabal donat un cabal instal·lat, utilitza
-  la comanda ~cabal new-install Cabal cabal-install~.
+  a ~3.4.0~. Per a actualitzar el cabal donat un cabal instal·lat,
+  utilitza la comanda ~cabal new-install Cabal cabal-install~.
 
   
 ** Autors:
